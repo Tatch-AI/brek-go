@@ -2,11 +2,17 @@
 
 Loaders resolve dynamic configuration values during startup. They keep config files logic-free while still allowing external secret stores and other runtime fetches.
 
-## Bundled loaders
+## Bundled Loaders
 
 - `awsSecret`: fetches a string secret from AWS Secrets Manager.
 
-## Example
+## Usage
+
+Loader functions must have the shape `func(params any) (string, error)`.
+
+A config object with exactly one key wrapped in square brackets, such as `[awsSecret]`, is treated as a loader invocation. Loader results replace the source object at that location.
+
+Example:
 
 _config/default.json_
 ```json
@@ -42,12 +48,22 @@ func main() {
 }
 ```
 
-## Usage
-
-- Loader functions must have the shape `func(params any) (string, error)`.
-- A config object with exactly one key wrapped in square brackets, such as `[awsSecret]`, is treated as a loader invocation.
-- Loader results replace the source object at that location.
-
 ## AWS Secrets Manager
 
-The bundled AWS loader calls `GetSecretValue` against Secrets Manager using the provided `key` and `region`. The AWS SDK for Go recommends retrieving secrets with `GetSecretValue` and caching values client-side for speed and lower cost.
+The bundled AWS loader calls `GetSecretValue` against Secrets Manager using the provided `key` and `region`.
+
+For best results, keep the loader result cached in the config cache and avoid reloading secrets repeatedly during the same process.
+
+## Custom Loaders
+
+You can register application-specific loaders by passing them to `brek.SetLoaders(...)`.
+
+```go
+brek.SetLoaders(brek.LoaderDict{
+	"fetchSecret": func(params any) (string, error) {
+		return "secret_value", nil
+	},
+})
+```
+
+Use `brek.DefaultLoaders()` as your starting point so you keep the bundled AWS loader too.

@@ -3,6 +3,7 @@ package brek
 import (
 	"fmt"
 	"os"
+	"strings"
 	"sync"
 )
 
@@ -47,6 +48,7 @@ func currentLoaders() LoaderDict {
 func GetConfig() (map[string]any, error) {
 	cacheMu.RLock()
 	if cachedConfig != nil {
+		debug("getConfig: returning cached config")
 		out := cachedConfig
 		cacheMu.RUnlock()
 		return out, nil
@@ -55,6 +57,7 @@ func GetConfig() (map[string]any, error) {
 
 	conf, err := readConfigJSON()
 	if err == nil {
+		debug("getConfig: loaded config.json from disk")
 		cacheMu.Lock()
 		cachedConfig = conf
 		cacheMu.Unlock()
@@ -73,17 +76,21 @@ func LoadConfig() (map[string]any, error) {
 	if err != nil {
 		return nil, err
 	}
+	debug("loadConfig: env", env)
 
 	sources, err := LoadConfFromFiles(env)
 	if err != nil {
 		return nil, err
 	}
+	debug("loadConfig: sources", sources)
 
 	merged := MergeConfs(sources)
+	debug("loadConfig: merged", merged)
 	resolved, err := resolveMap(merged, currentLoaders())
 	if err != nil {
 		return nil, err
 	}
+	debug("loadConfig: resolved", resolved)
 
 	if err := WriteConfJSON(resolved); err != nil {
 		return nil, err
@@ -110,7 +117,9 @@ func WriteConfJSON(resolvedConf map[string]any) error {
 }
 
 func DeleteConfJSON() error {
-	if err := os.Remove(ConfigJSONPath()); err != nil && !os.IsNotExist(err) {
+	path := ConfigJSONPath()
+	debug("deleteConfJSON:", path)
+	if err := os.Remove(path); err != nil && !os.IsNotExist(err) {
 		return err
 	}
 
@@ -122,12 +131,15 @@ func Run(args []string) error {
 		return fmt.Errorf("usage: brek [load-config|write-types]")
 	}
 
-	switch args[0] {
+	switch strings.TrimSpace(args[0]) {
 	case "load-config":
 		_, err := LoadConfig()
 		return err
 	case "write-types":
-		return WriteTypeDef()
+		if err := WriteTypeDef(); err != nil {
+			return err
+		}
+		return DeleteConfJSON()
 	default:
 		return fmt.Errorf("usage: brek [load-config|write-types]")
 	}

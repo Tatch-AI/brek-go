@@ -69,10 +69,11 @@ func WriteTypeDef() error {
 		return err
 	}
 
-	filepath := filepath.Join(ConfigDir(), "Config.d.ts")
+	typePath := filepath.Join(ConfigDir(), "Config.d.ts")
 	if err := os.MkdirAll(ConfigDir(), 0o755); err != nil {
 		return err
 	}
 
-	return os.WriteFile(filepath, []byte(GenerateTypeDef(defaultConfig)), 0o644)
+	debug("writeTypeDef:", typePath)
+	return os.WriteFile(typePath, []byte(GenerateTypeDef(defaultConfig)), 0o644)
 }

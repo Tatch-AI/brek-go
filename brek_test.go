@@ -1069,6 +1069,9 @@ func TestLoadConfigGetConfigAndRun(t *testing.T) {
 	if _, err := os.Stat(filepath.Join(tmp, "Config.d.ts")); err != nil {
 		t.Fatalf("expected Config.d.ts after Run(write-types): %v", err)
 	}
+	if _, err := os.Stat(confPath); !os.IsNotExist(err) {
+		t.Fatalf("expected config.json to be deleted after Run(write-types), stat err = %v", err)
+	}
 }
 
 func TestRunUsageAndErrors(t *testing.T) {
@@ -1081,5 +1084,35 @@ func TestRunUsageAndErrors(t *testing.T) {
 
 	if got := (ConfNotLoaded{}).Error(); got != "CONF_NOT_LOADED" {
 		t.Fatalf("ConfNotLoaded.Error() = %q", got)
+	}
+}
+
+func TestRunWriteTypesErrorPath(t *testing.T) {
+	t.Cleanup(resetTestState)
+	tmp := t.TempDir()
+	t.Setenv("BREK_CONFIG_DIR", tmp)
+	t.Setenv("BREK_WRITE_DIR", tmp)
+
+	if err := os.WriteFile(filepath.Join(tmp, "default.json"), []byte("{broken"), 0o644); err != nil {
+		t.Fatalf("write invalid default.json: %v", err)
+	}
+
+	if err := Run([]string{"write-types"}); err == nil {
+		t.Fatal("expected error from Run(write-types) with invalid config")
+	}
+}
+
+func TestDebugEnvironmentPaths(t *testing.T) {
+	t.Cleanup(resetTestState)
+	tmp := t.TempDir()
+	t.Setenv("BREK_CONFIG_DIR", tmp)
+	t.Setenv("BREK_WRITE_DIR", tmp)
+	t.Setenv("BREK_DEBUG", "1")
+	t.Setenv("LAMBDACONF_DEBUG", "1")
+
+	writeTestJSON(t, tmp, "default.json", map[string]any{"foo": "bar"})
+
+	if err := WriteTypeDef(); err != nil {
+		t.Fatalf("WriteTypeDef() error = %v", err)
 	}
 }

@@ -1,6 +1,6 @@
 # Getting Started
 
-`brek-go` keeps configuration in JSON files and resolves it into a typed Go map at startup.
+`brek-go` keeps configuration in JSON files, resolves it into a Go map at startup, and writes the resolved result back to disk for reuse.
 
 ## Install
 
@@ -8,7 +8,13 @@
 go get github.com/sushantvema-harper/brek-go
 ```
 
-## Create config files
+Or build the CLI locally:
+
+```bash
+go run ./cmd/brek load-config
+```
+
+## Create Config Files
 
 Create a `config` directory in the root of your project. Only `default.json` is required.
 
@@ -33,7 +39,7 @@ Example `default.json`:
 }
 ```
 
-## Generate the config cache
+## Generate the Config Cache
 
 Run:
 
@@ -43,7 +49,7 @@ brek load-config
 
 That resolves the layered config and writes `config/config.json` by default.
 
-## Read config in Go
+## Read Config in Go
 
 ```go
 conf, err := brek.GetConfig()
@@ -52,13 +58,20 @@ if err != nil {
 }
 ```
 
-## Register loaders
+## Register Loaders
 
-Go loaders are registered in code. Start with the bundled set:
+Go loaders are registered in code.
+
+Start with the bundled set:
 
 ```go
 brek.SetLoaders(brek.DefaultLoaders())
 ```
 
-You can add your own loaders on top of that map.
+You can add your own loaders on top of that map before calling `LoadConfig()`.
 
+## Write Types
+
+`brek write-types` writes `config/Config.d.ts` from `default.json` and clears any stale `config.json` cache.
+
+If you are migrating from the original TypeScript project, this is the Go equivalent of the same developer workflow.
