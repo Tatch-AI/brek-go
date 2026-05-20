@@ -1,0 +1,4 @@
+config/config.json
+*.coverprofile
+.DS_Store
+
