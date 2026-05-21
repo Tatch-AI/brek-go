@@ -1,0 +1,20 @@
+{
+  "name": "brek-go",
+  "private": false,
+  "version": "0.0.0-autorel",
+  "description": "Go successor to brek, a structured config loader with layered files and loaders.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Tatch-AI/brek-go.git"
+  },
+  "homepage": "https://github.com/Tatch-AI/brek-go",
+  "keywords": [
+    "config",
+    "configuration",
+    "go",
+    "loader",
+    "secrets",
+    "aws"
+  ]
+}
