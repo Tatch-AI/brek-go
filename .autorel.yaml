@@ -12,4 +12,4 @@ commitTypes:
 branches:
   - {name: main}
   - {name: next, preRelease: next}
-publish: true
+publish: false
