@@ -1,5 +1,10 @@
 # brek-go
 
+[![build status](https://github.com/Tatch-AI/brek-go/actions/workflows/release.yml/badge.svg)](https://github.com/Tatch-AI/brek-go/actions)
+[![SemVer](https://img.shields.io/badge/SemVer-2.0.0-blue)]()
+[![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-yellow.svg)](https://conventionalcommits.org)
+[![AutoRel](https://img.shields.io/badge/%F0%9F%9A%80%20AutoRel-2D4DDE)](https://github.com/mhweiner/autorel)
+
 This project is the Go successor to the original [`brek`](https://github.com/mhweiner/brek) project.
 
 `brek-go` is a structured config loader for Go. It keeps configuration declarative, supports layered config files, resolves environment variables, and ships with a bundled AWS Secrets Manager loader.
@@ -254,6 +259,8 @@ Useful checks:
 ## Support, Feedback, and Contributions
 
 Open issues or PRs against this repository if you find a parity gap or a behavioral mismatch with the original brek project. The original implementation lives at [`mhweiner/brek`](https://github.com/mhweiner/brek).
+
+Releases are automated with [autorel](https://github.com/mhweiner/autorel) from conventional commits on `main` and `next`, matching the release model used by the original project.
 
 ## Why is it called brek?
 

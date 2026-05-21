@@ -1,0 +1,33 @@
+name: Release
+on:
+  push:
+    branches:
+      - main
+      - next
+permissions:
+  contents: write
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    concurrency:
+      group: deploy-${{github.ref}}
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: go test ./...
+      - run: npx autorel@^2
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
