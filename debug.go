@@ -6,7 +6,7 @@ import (
 )
 
 func debug(args ...any) {
-	if os.Getenv("BREK_DEBUG") == "" && os.Getenv("LAMBDACONF_DEBUG") == "" {
+	if os.Getenv("BREK_DEBUG") == "" {
 		return
 	}
 

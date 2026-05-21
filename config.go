@@ -128,19 +128,14 @@ func DeleteConfJSON() error {
 
 func Run(args []string) error {
 	if len(args) == 0 {
-		return fmt.Errorf("usage: brek [load-config|write-types]")
+		return fmt.Errorf("usage: brek load-config")
 	}
 
 	switch strings.TrimSpace(args[0]) {
 	case "load-config":
 		_, err := LoadConfig()
 		return err
-	case "write-types":
-		if err := WriteTypeDef(); err != nil {
-			return err
-		}
-		return DeleteConfJSON()
 	default:
-		return fmt.Errorf("usage: brek [load-config|write-types]")
+		return fmt.Errorf("usage: brek load-config")
 	}
 }

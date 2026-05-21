@@ -74,8 +74,17 @@ brek.SetLoaders(brek.DefaultLoaders())
 
 You can add your own loaders on top of that map before calling `LoadConfig()`.
 
-## Write Types
+## CLI
 
-`brek write-types` writes `config/Config.d.ts` from `default.json` and clears any stale `config.json` cache.
+Run the CLI directly:
 
-If you are migrating from the original TypeScript project, this is the Go equivalent of the same developer workflow.
+```bash
+brek load-config
+```
+
+If you are migrating from the original project, the Go equivalent workflow is:
+
+```bash
+go install github.com/Tatch-AI/brek-go/cmd/brek@latest
+brek load-config
+```

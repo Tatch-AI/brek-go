@@ -683,111 +683,7 @@ func TestResolveConf(t *testing.T) {
 	})
 }
 
-func TestGenerateTypeDefAndProps(t *testing.T) {
-	t.Run("flat object", func(t *testing.T) {
-		got := GenerateTypeDef(map[string]any{
-			"foo":       "bar",
-			"count":     42,
-			"isEnabled": true,
-		})
-
-		want := `
-import {Config} from "brek";
-declare module "brek" {
-    export interface Config {
-        'count': number
-        'foo': string
-        'isEnabled': boolean
-    }
-}`
-
-		if got != want {
-			t.Fatalf("GenerateTypeDef() = %q, want %q", got, want)
-		}
-	})
-
-	t.Run("nested object", func(t *testing.T) {
-		got := GenerateTypeDef(map[string]any{
-			"database": map[string]any{
-				"host": "localhost",
-				"port": 5432,
-				"credentials": map[string]any{
-					"password": "pass",
-					"username": "user",
-				},
-			},
-			"features": map[string]any{
-				"darkMode":    true,
-				"experiments": []any{"feature1", "feature2"},
-			},
-		})
-
-		want := `
-import {Config} from "brek";
-declare module "brek" {
-    export interface Config {
-        'database': {
-            'credentials': {
-                'password': string
-                'username': string
-            }
-            'host': string
-            'port': number
-        }
-        'features': {
-            'darkMode': boolean
-            'experiments': string[]
-        }
-    }
-}`
-
-		if got != want {
-			t.Fatalf("GenerateTypeDef() = %q, want %q", got, want)
-		}
-	})
-
-	t.Run("loader becomes string", func(t *testing.T) {
-		got := GenerateTypeDef(map[string]any{
-			"mongoDb": map[string]any{
-				"[fetchSecret]": map[string]any{"key": "MONGODB_URI"},
-			},
-		})
-
-		want := `
-import {Config} from "brek";
-declare module "brek" {
-    export interface Config {
-        'mongoDb': string
-    }
-}`
-
-		if got != want {
-			t.Fatalf("GenerateTypeDef() = %q, want %q", got, want)
-		}
-	})
-
-	t.Run("props helper handles arrays", func(t *testing.T) {
-		got := props(map[string]any{"list": []any{"item1", "item2"}}, 2)
-		want := "        'list': string[]"
-		if got != want {
-			t.Fatalf("props() = %q, want %q", got, want)
-		}
-	})
-
-	t.Run("type helpers cover object and empty array branches", func(t *testing.T) {
-		if got := typeForValue([]any{}, 2); got != "any[]" {
-			t.Fatalf("typeForValue(empty array) = %q", got)
-		}
-		if got := primitiveType(map[string]any{}, 0); got != "object" {
-			t.Fatalf("primitiveType(map) = %q", got)
-		}
-		if got := primitiveType([]any{}, 0); got != "object" {
-			t.Fatalf("primitiveType(array) = %q", got)
-		}
-	})
-}
-
-func TestWriteTypeDefAndDeleteConfJSON(t *testing.T) {
+func TestWriteAndDeleteConfJSON(t *testing.T) {
 	t.Cleanup(resetTestState)
 	tmp := t.TempDir()
 	t.Setenv("BREK_CONFIG_DIR", tmp)
@@ -803,20 +699,6 @@ func TestWriteTypeDefAndDeleteConfJSON(t *testing.T) {
 			"string":  "hello",
 		},
 	})
-
-	if err := WriteTypeDef(); err != nil {
-		t.Fatalf("WriteTypeDef() error = %v", err)
-	}
-
-	typePath := filepath.Join(tmp, "Config.d.ts")
-	data, err := os.ReadFile(typePath)
-	if err != nil {
-		t.Fatalf("read type file: %v", err)
-	}
-
-	if !strings.Contains(string(data), "'typeTest': {") {
-		t.Fatalf("unexpected type file contents: %s", data)
-	}
 
 	if err := WriteConfJSON(map[string]any{"foo": "bar", "count": 3}); err != nil {
 		t.Fatalf("WriteConfJSON() error = %v", err)
@@ -834,47 +716,6 @@ func TestWriteTypeDefAndDeleteConfJSON(t *testing.T) {
 	}
 	if _, err := os.Stat(confPath); !os.IsNotExist(err) {
 		t.Fatalf("expected config.json to be deleted, stat err = %v", err)
-	}
-}
-
-func TestWriteTypeDefInvalidAndDeleteMissing(t *testing.T) {
-	t.Cleanup(resetTestState)
-	tmp := t.TempDir()
-	t.Setenv("BREK_CONFIG_DIR", tmp)
-	t.Setenv("BREK_WRITE_DIR", tmp)
-
-	if err := DeleteConfJSON(); err != nil {
-		t.Fatalf("DeleteConfJSON() missing error = %v", err)
-	}
-
-	if err := os.WriteFile(filepath.Join(tmp, "config.json"), []byte(`{"foo":"bar"}`), 0o644); err != nil {
-		t.Fatalf("write config.json: %v", err)
-	}
-	if err := os.Chmod(tmp, 0o555); err != nil {
-		t.Fatalf("chmod dir: %v", err)
-	}
-	if err := DeleteConfJSON(); err == nil {
-		t.Fatal("expected permission error from DeleteConfJSON")
-	}
-	if err := os.Chmod(tmp, 0o755); err != nil {
-		t.Fatalf("restore chmod dir: %v", err)
-	}
-
-	// Invalid default.json should fail.
-	if err := os.WriteFile(filepath.Join(tmp, "default.json"), []byte("{broken"), 0o644); err != nil {
-		t.Fatalf("write invalid default.json: %v", err)
-	}
-	if err := WriteTypeDef(); err == nil {
-		t.Fatal("expected WriteTypeDef() error for invalid JSON")
-	}
-
-	fileConfigDir := filepath.Join(tmp, "config-dir-as-file")
-	if err := os.WriteFile(fileConfigDir, []byte("x"), 0o644); err != nil {
-		t.Fatalf("write file config dir: %v", err)
-	}
-	t.Setenv("BREK_CONFIG_DIR", fileConfigDir)
-	if err := WriteTypeDef(); err == nil {
-		t.Fatal("expected WriteTypeDef() mkdir error")
 	}
 }
 
@@ -1062,16 +903,6 @@ func TestLoadConfigGetConfigAndRun(t *testing.T) {
 	if _, err := os.Stat(confPath); err != nil {
 		t.Fatalf("expected config.json after Run(load-config): %v", err)
 	}
-
-	if err := Run([]string{"write-types"}); err != nil {
-		t.Fatalf("Run(write-types) error = %v", err)
-	}
-	if _, err := os.Stat(filepath.Join(tmp, "Config.d.ts")); err != nil {
-		t.Fatalf("expected Config.d.ts after Run(write-types): %v", err)
-	}
-	if _, err := os.Stat(confPath); !os.IsNotExist(err) {
-		t.Fatalf("expected config.json to be deleted after Run(write-types), stat err = %v", err)
-	}
 }
 
 func TestRunUsageAndErrors(t *testing.T) {
@@ -1084,35 +915,5 @@ func TestRunUsageAndErrors(t *testing.T) {
 
 	if got := (ConfNotLoaded{}).Error(); got != "CONF_NOT_LOADED" {
 		t.Fatalf("ConfNotLoaded.Error() = %q", got)
-	}
-}
-
-func TestRunWriteTypesErrorPath(t *testing.T) {
-	t.Cleanup(resetTestState)
-	tmp := t.TempDir()
-	t.Setenv("BREK_CONFIG_DIR", tmp)
-	t.Setenv("BREK_WRITE_DIR", tmp)
-
-	if err := os.WriteFile(filepath.Join(tmp, "default.json"), []byte("{broken"), 0o644); err != nil {
-		t.Fatalf("write invalid default.json: %v", err)
-	}
-
-	if err := Run([]string{"write-types"}); err == nil {
-		t.Fatal("expected error from Run(write-types) with invalid config")
-	}
-}
-
-func TestDebugEnvironmentPaths(t *testing.T) {
-	t.Cleanup(resetTestState)
-	tmp := t.TempDir()
-	t.Setenv("BREK_CONFIG_DIR", tmp)
-	t.Setenv("BREK_WRITE_DIR", tmp)
-	t.Setenv("BREK_DEBUG", "1")
-	t.Setenv("LAMBDACONF_DEBUG", "1")
-
-	writeTestJSON(t, tmp, "default.json", map[string]any{"foo": "bar"})
-
-	if err := WriteTypeDef(); err != nil {
-		t.Fatalf("WriteTypeDef() error = %v", err)
 	}
 }

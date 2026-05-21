@@ -1,6 +1,8 @@
 # brek-go
 
-`brek-go` is a structured, typed config loader for Go. It keeps configuration declarative, supports layered config files, resolves environment variables, and ships with a bundled AWS Secrets Manager loader.
+This project is the Go successor to the original [`brek`](https://github.com/mhweiner/brek) project.
+
+`brek-go` is a structured config loader for Go. It keeps configuration declarative, supports layered config files, resolves environment variables, and ships with a bundled AWS Secrets Manager loader.
 
 `brek` stands for **B**locking **R**esolution of **E**nvironment **K**eys.
 
@@ -47,7 +49,6 @@ func main() {
 - Environment variable expansion with `${VAR}` syntax.
 - Loader support for dynamic runtime values.
 - Bundled `awsSecret` loader for AWS Secrets Manager.
-- Generated Go-facing config typing through `Config.d.ts` for downstream TypeScript consumers.
 - A small, test-covered codebase with Go-native APIs and CLI entry points.
 
 ## Table of Contents
@@ -102,7 +103,7 @@ Notes:
 
 - `ENVIRONMENT` wins over `NODE_ENV` if both are set.
 - Arrays and loader objects are replaced, not merged.
-- `BREK_WRITE_DIR` controls where `config.json` and `Config.d.ts` are written.
+- `BREK_WRITE_DIR` controls where `config.json` is written.
 
 ## Using CLI/ENV Overrides
 
@@ -193,10 +194,6 @@ Writes a resolved configuration map to `config.json`.
 
 Deletes the generated `config.json` cache if it exists.
 
-### `brek.WriteTypeDef() error`
-
-Writes `config/Config.d.ts` from `default.json`.
-
 ### `brek.DefaultLoaders() brek.LoaderDict`
 
 Returns the bundled loader set, including `awsSecret`.
@@ -207,19 +204,15 @@ Registers application-specific loaders on top of the bundled set.
 
 ## CLI Reference
 
-You can run the CLI via `brek` or `lambdaconf`.
+You can run the CLI via `brek`.
 
 ```bash
 brek load-config
-brek write-types
-lambdaconf load-config
-lambdaconf write-types
 ```
 
 Commands:
 
 - `load-config` resolves and writes `config.json`
-- `write-types` writes `Config.d.ts` and clears `config.json`, matching the original brek CLI behavior
 
 ## Recommended Best Practices
 
@@ -232,24 +225,19 @@ Commands:
 
 AWS Lambda has a read-only filesystem outside `/tmp`.
 
-Set `BREK_WRITE_DIR=/tmp` if you want `config.json` or `Config.d.ts` written during Lambda startup.
+Set `BREK_WRITE_DIR=/tmp` if you want `config.json` written during Lambda startup.
 
 Example:
 
-```json
-{
-  "scripts": {
-    "build": "go test ./...",
-    "load-config": "BREK_WRITE_DIR=/tmp brek load-config"
-  }
-}
+```bash
+BREK_WRITE_DIR=/tmp brek load-config
 ```
 
 If you need config loaded during runtime, call `brek.LoadConfig()` in your handler before processing requests.
 
 ## Debugging
 
-Set `BREK_DEBUG=1` or `LAMBDACONF_DEBUG=1` to enable internal debug logs.
+Set `BREK_DEBUG=1` to enable internal debug logs.
 
 Useful checks:
 
@@ -261,12 +249,11 @@ Useful checks:
 ## Known Issues
 
 - `BREK_LOADERS_FILE_PATH` is retained for parity with the original project, but Go loaders are registered in code rather than loaded from a JS file.
-- `write-types` clears `config.json` after writing `Config.d.ts`, which matches the original brek CLI but can surprise if you expect the cache to remain.
 - The bundled AWS Secrets Manager loader requires AWS credentials and a valid region.
 
 ## Support, Feedback, and Contributions
 
-Open issues or PRs against this repository if you find a parity gap or a behavioral mismatch with the original brek project.
+Open issues or PRs against this repository if you find a parity gap or a behavioral mismatch with the original brek project. The original implementation lives at [`mhweiner/brek`](https://github.com/mhweiner/brek).
 
 ## Why is it called brek?
 

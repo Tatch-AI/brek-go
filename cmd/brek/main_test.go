@@ -32,14 +32,14 @@ func TestMainSuccessAndErrorPaths(t *testing.T) {
 		}
 	}
 
-	os.Args = []string{"brek", "write-types"}
+	os.Args = []string{"brek", "load-config"}
 	main()
 
 	if exitCalled {
 		t.Fatal("did not expect exit on successful command")
 	}
-	if _, err := os.Stat(filepath.Join(tmp, "Config.d.ts")); err != nil {
-		t.Fatalf("expected Config.d.ts to be written: %v", err)
+	if _, err := os.Stat(filepath.Join(tmp, "config.json")); err != nil {
+		t.Fatalf("expected config.json to be written: %v", err)
 	}
 
 	exitCalled = false
