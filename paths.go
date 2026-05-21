@@ -32,3 +32,7 @@ func LoadersFilePath() string {
 func ConfigJSONPath() string {
 	return filepath.Join(WriteDir(), "config.json")
 }
+
+func ConfigLockPath() string {
+	return filepath.Join(WriteDir(), "config.lock")
+}

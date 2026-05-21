@@ -88,5 +88,29 @@ func writeJSONFile(path string, value any) error {
 		return err
 	}
 
-	return os.WriteFile(path, data, 0o644)
+	tmpFile, err := os.CreateTemp(filepath.Dir(path), ".brek-*.tmp")
+	if err != nil {
+		return err
+	}
+	tmpName := tmpFile.Name()
+	defer func() {
+		_ = tmpFile.Close()
+		_ = os.Remove(tmpName)
+	}()
+
+	if _, err := tmpFile.Write(data); err != nil {
+		return err
+	}
+	if err := tmpFile.Sync(); err != nil {
+		return err
+	}
+	if err := tmpFile.Close(); err != nil {
+		return err
+	}
+
+	if err := os.Rename(tmpName, path); err != nil {
+		return err
+	}
+
+	return nil
 }

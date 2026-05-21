@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"syscall"
 )
 
 var (
@@ -46,32 +47,48 @@ func currentLoaders() LoaderDict {
 }
 
 func GetConfig() (map[string]any, error) {
-	cacheMu.RLock()
-	if cachedConfig != nil {
-		debug("getConfig: returning cached config")
-		out := cachedConfig
-		cacheMu.RUnlock()
-		return out, nil
-	}
-	cacheMu.RUnlock()
-
-	conf, err := readConfigJSON()
-	if err == nil {
-		debug("getConfig: loaded config.json from disk")
+	return withConfigLock(func() (map[string]any, error) {
 		cacheMu.Lock()
-		cachedConfig = conf
-		cacheMu.Unlock()
-		return conf, nil
-	}
+		defer cacheMu.Unlock()
 
-	if !os.IsNotExist(err) {
-		return nil, err
-	}
+		if cachedConfig != nil {
+			debug("getConfig: returning cached config")
+			return cachedConfig, nil
+		}
 
-	return LoadConfig()
+		conf, err := readConfigJSON()
+		if err == nil {
+			debug("getConfig: loaded config.json from disk")
+			cachedConfig = conf
+			return conf, nil
+		}
+
+		if !os.IsNotExist(err) {
+			return nil, err
+		}
+
+		return loadConfigUnlocked()
+	})
 }
 
-func LoadConfig() (map[string]any, error) {
+func withConfigLock[T any](fn func() (T, error)) (T, error) {
+	lockFile, err := os.OpenFile(ConfigLockPath(), os.O_CREATE|os.O_RDWR, 0o600)
+	if err != nil {
+		var zero T
+		return zero, err
+	}
+	defer lockFile.Close()
+
+	if err := syscall.Flock(int(lockFile.Fd()), syscall.LOCK_EX); err != nil {
+		var zero T
+		return zero, err
+	}
+	defer syscall.Flock(int(lockFile.Fd()), syscall.LOCK_UN)
+
+	return fn()
+}
+
+func loadConfigUnlocked() (map[string]any, error) {
 	env, err := GetEnvArguments()
 	if err != nil {
 		return nil, err
@@ -96,11 +113,22 @@ func LoadConfig() (map[string]any, error) {
 		return nil, err
 	}
 
-	cacheMu.Lock()
-	cachedConfig = resolved
-	cacheMu.Unlock()
-
 	return resolved, nil
+}
+
+func LoadConfig() (map[string]any, error) {
+	return withConfigLock(func() (map[string]any, error) {
+		cacheMu.Lock()
+		defer cacheMu.Unlock()
+
+		resolved, err := loadConfigUnlocked()
+		if err != nil {
+			return nil, err
+		}
+
+		cachedConfig = resolved
+		return resolved, nil
+	})
 }
 
 func readConfigJSON() (map[string]any, error) {
@@ -117,13 +145,21 @@ func WriteConfJSON(resolvedConf map[string]any) error {
 }
 
 func DeleteConfJSON() error {
-	path := ConfigJSONPath()
-	debug("deleteConfJSON:", path)
-	if err := os.Remove(path); err != nil && !os.IsNotExist(err) {
-		return err
-	}
+	_, err := withConfigLock(func() (struct{}, error) {
+		cacheMu.Lock()
+		defer cacheMu.Unlock()
 
-	return nil
+		path := ConfigJSONPath()
+		debug("deleteConfJSON:", path)
+		if err := os.Remove(path); err != nil && !os.IsNotExist(err) {
+			return struct{}{}, err
+		}
+
+		cachedConfig = nil
+
+		return struct{}{}, nil
+	})
+	return err
 }
 
 func Run(args []string) error {
