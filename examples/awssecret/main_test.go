@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/sushantvema-harper/brek-go"
+	"github.com/Tatch-AI/brek-go"
 )
 
 func TestMain(t *testing.T) {

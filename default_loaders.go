@@ -1,6 +1,6 @@
 package brek
 
-import "github.com/sushantvema-harper/brek-go/loaders/awssecret"
+import "github.com/Tatch-AI/brek-go/loaders/awssecret"
 
 func DefaultLoaders() LoaderDict {
 	return LoaderDict{

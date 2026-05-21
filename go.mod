@@ -1,4 +1,4 @@
-module github.com/sushantvema-harper/brek-go
+module github.com/Tatch-AI/brek-go
 
 go 1.26
 

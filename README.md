@@ -27,7 +27,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/sushantvema-harper/brek-go"
+	"github.com/Tatch-AI/brek-go"
 )
 
 func main() {
@@ -158,7 +158,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/sushantvema-harper/brek-go"
+	"github.com/Tatch-AI/brek-go"
 )
 
 func main() {

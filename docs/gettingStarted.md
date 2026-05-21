@@ -4,14 +4,16 @@
 
 ## Install
 
+Use it as a Go module:
+
 ```bash
-go get github.com/sushantvema-harper/brek-go
+go get github.com/Tatch-AI/brek-go
 ```
 
-Or build the CLI locally:
+Install the CLI:
 
 ```bash
-go run ./cmd/brek load-config
+go install github.com/Tatch-AI/brek-go/cmd/brek@latest
 ```
 
 ## Create Config Files
@@ -48,6 +50,8 @@ brek load-config
 ```
 
 That resolves the layered config and writes `config/config.json` by default.
+
+If you are calling the module directly from Go code, import `github.com/Tatch-AI/brek-go` and call `brek.GetConfig()` or `brek.LoadConfig()`.
 
 ## Read Config in Go
 

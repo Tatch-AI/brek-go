@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/sushantvema-harper/brek-go"
+	"github.com/Tatch-AI/brek-go"
 )
 
 var exitFunc = os.Exit

@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/sushantvema-harper/brek-go"
+	"github.com/Tatch-AI/brek-go"
 )
 
 func TestMainSuccessAndErrorPaths(t *testing.T) {
